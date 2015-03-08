@@ -25,7 +25,7 @@ def find_components(image):
 
         t = cv2.findNonZero(temp).T
         (min_i, max_i, min_j, max_j) = (np.min(t[0]), np.max(t[0]), np.min(t[1]), np.max(t[1]))
-        components.append(temp[min_j:max_j, min_i:max_i])
+        components.append((temp[min_j:max_j, min_i:max_i], (min_i, min_j, max_i, max_j)))
         label_number += 1
 
     return components
