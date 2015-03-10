@@ -65,13 +65,14 @@ def main():
     i = 0
     results = []
     #for img in image_comps:
-    img = image_comps[7]
+    img = image_comps[3]
     print("minimizing affine for component", i)
     cost_function = make_cost_function(img)
     aff0 = np.array([1, 0, 0, 1, 0, 0])
     # res = anneal(cost_function, aff0, schedule='fast')
-    res = minimize(cost_function, aff0, method='anneal', options={'disp': True, 'ftol': 1e-4})
-    #res = basinhopping(cost_function, aff0)
+    res = minimize(cost_function, aff0, method='anneal', options={'disp': True, 'ftol': 1e-8})
+    # res = minimize(cost_function, aff0, method='nelder-mead', options={'xtol':1e-8, 'disp': True})
+    # res = basinhopping(cost_function, aff0)
     print(res.x)
     i += 1
     results.append(res)
