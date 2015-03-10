@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
 from PIL import Image
-from matplotlib import pyplot
 from scipy.optimize import minimize, anneal, basinhopping
+import matplotlib.pyplot as plt
 
 from components import find_components
-from optimization import make_cost_function
+from optimization import make_cost_function, make_canonical_images, make_affine_matrix
 
 
 def get_components(cmps, image):
@@ -70,12 +70,27 @@ def main():
     cost_function = make_cost_function(img)
     aff0 = np.array([1, 0, 0, 1, 0, 0])
     # res = anneal(cost_function, aff0, schedule='fast')
-    res = minimize(cost_function, aff0, method='anneal', options={'disp': True, 'ftol': 1e-8})
+    # res = minimize(cost_function, aff0, method='anneal', options={'disp': True, 'ftol': 1e-8})
     # res = minimize(cost_function, aff0, method='nelder-mead', options={'xtol':1e-8, 'disp': True})
-    # res = basinhopping(cost_function, aff0)
+    res = basinhopping(cost_function, aff0)
     print(res.x)
     i += 1
     results.append(res)
+
+    plt.figure()
+    plt.imshow(img, cmap='gray')
+    plt.xticks([]), plt.yticks([])
+    plt.show(block=False)
+
+    for res in results:
+        m = make_affine_matrix(res.x)
+        canonical_image = make_canonical_images(img.shape[1], img.shape[0], 0.6, 0.4)
+        affine_image = cv2.warpAffine(canonical_image, m, (canonical_image.shape[1], canonical_image.shape[0]))
+
+        plt.figure()
+        plt.imshow(affine_image, cmap='gray')
+        plt.xticks([]), plt.yticks([])
+        plt.show()
 
 
 
