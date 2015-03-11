@@ -64,25 +64,19 @@ def main():
 
     i = 0
     results = []
-    #for img in image_comps:
-    img = image_comps[3]
-    print("minimizing affine for component", i)
-    cost_function = make_cost_function(img)
-    aff0 = np.array([1, 0, 0, 1, 0, 0])
-    # res = anneal(cost_function, aff0, schedule='fast')
-    # res = minimize(cost_function, aff0, method='anneal', options={'disp': True, 'ftol': 1e-8})
-    # res = minimize(cost_function, aff0, method='nelder-mead', options={'xtol':1e-8, 'disp': True})
-    res = basinhopping(cost_function, aff0)
-    print(res.x)
-    i += 1
-    results.append(res)
+    for img in image_comps:
+        print("minimizing affine for component", i)
+        cost_function = make_cost_function(img)
+        aff0 = np.array([1, 0, 0, 1, 0, 0])
+        res = minimize(cost_function, aff0, method='powell', options={'xtol':1e-8, 'disp': True})
+        print(res.x)
+        results.append(res)
 
-    plt.figure()
-    plt.imshow(img, cmap='gray')
-    plt.xticks([]), plt.yticks([])
-    plt.show(block=False)
+        plt.figure()
+        plt.imshow(img, cmap='gray')
+        plt.xticks([]), plt.yticks([])
+        plt.savefig('./output/blob_%i.png' % i)
 
-    for res in results:
         m = make_affine_matrix(res.x)
         canonical_image = make_canonical_images(img.shape[1], img.shape[0], 0.6, 0.4)
         affine_image = cv2.warpAffine(canonical_image, m, (canonical_image.shape[1], canonical_image.shape[0]))
@@ -90,10 +84,9 @@ def main():
         plt.figure()
         plt.imshow(affine_image, cmap='gray')
         plt.xticks([]), plt.yticks([])
-        plt.show()
+        plt.savefig('./output/affine_corrected_%i.png' % i)
 
-
-
+        i += 1
 
 
 if __name__ == '__main__':
