@@ -1,13 +1,12 @@
-from math import floor
+import pickle
 
 import cv2
 import numpy as np
 from PIL import Image
-from scipy.optimize import minimize, anneal, basinhopping
-import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 from components import find_components
-from optimization import make_cost_function, make_canonical_images, make_affine_matrix
+from optimization import make_cost_function
 
 
 def get_components(cmps, image):
@@ -53,21 +52,23 @@ def optimize_affine_transform(image_comps):
         print(res.x)
         results.append(res)
 
-        plt.figure()
-        plt.imshow(img, cmap='gray')
-        plt.xticks([]), plt.yticks([])
-        plt.savefig('./output/blob_%i.png' % i)
+        # plt.figure()
+        # plt.imshow(img, cmap='gray')
+        # plt.xticks([]), plt.yticks([])
+        # plt.savefig('./output/blob_%i.png' % i)
 
-        m = make_affine_matrix(res.x)
-        canonical_image = make_canonical_images(img.shape[1], img.shape[0], 0.6, 0.4)
-        affine_image = cv2.warpAffine(canonical_image, m, (canonical_image.shape[1], canonical_image.shape[0]))
+        # m = make_affine_matrix(res.x)
+        # canonical_image = make_canonical_images(img.shape[1], img.shape[0], 0.6, 0.4)
+        # affine_image = cv2.warpAffine(canonical_image, m, (canonical_image.shape[1], canonical_image.shape[0]))
 
-        plt.figure()
-        plt.imshow(affine_image, cmap='gray')
-        plt.xticks([]), plt.yticks([])
-        plt.savefig('./output/affine_corrected_%i.png' % i)
+        # plt.figure()
+        # plt.imshow(affine_image, cmap='gray')
+        # plt.xticks([]), plt.yticks([])
+        # plt.savefig('./output/affine_corrected_%i.png' % i)
 
         i += 1
+
+    return results
 
 
 def main():
@@ -92,37 +93,41 @@ def main():
     image_comps = get_components(cmps, image.copy())
     print('Total components', len(image_comps))
 
-    img = image_comps[5]
-    cost_function = make_cost_function(img)
-    aff0 = np.array([1, 0, 0, 1, 0, 0])
-    res = minimize(cost_function, aff0, method='powell', options={'xtol':1e-8, 'disp': True})
-    print(res.x)
+    res = optimize_affine_transform(image_comps)
 
-    # m = make_affine_matrix(res.x)
-    height, width = img.shape[:2]
-    rh, rw = 0.4, 0.6
-    ps = [[int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0))],
-          [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0))],
-          [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0 + rw*width) - 1)],
-          [int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0 + rw*width) - 1)]]
-    A = np.asarray([[res.x[0], res.x[1]], [res.x[2], res.x[3]]])
-    b = np.asarray([res.x[4], res.x[5]])
-    c = np.asarray(cmps[5][1][1], cmps[5][1][0])
-    afps = []
-    for p in ps:
-        afps.append(np.dot(A, np.asarray(p)) + b + c)
+    #save result to disk
 
-    path = np.asarray(afps)
-    path = np.int0(path)
-    contour_image = cv2.drawContours(original_image.copy(), [path], 0, (255, 0, 0), 3)
-    plt.imshow(contour_image)
-    plt.xticks([]), plt.yticks([])
-    plt.show()
+    with open('./output/transformations.p', 'rb') as fl:
+        pickle.dump(res, fl)
+
+    # img = image_comps[5]
+    # cost_function = make_cost_function(img)
+    # aff0 = np.array([1, 0, 0, 1, 0, 0])
+    # res = minimize(cost_function, aff0, method='powell', options={'xtol':1e-8, 'disp': True})
+    # print(res.x)
+    #
+    # # m = make_affine_matrix(res.x)
+    # height, width = img.shape[:2]
+    # rh, rw = 0.4, 0.6
+    # ps = [[int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0))],
+    #       [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0))],
+    #       [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0 + rw*width) - 1)],
+    #       [int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0 + rw*width) - 1)]]
+    # A = np.asarray([[res.x[0], res.x[1]], [res.x[2], res.x[3]]])
+    # b = np.asarray([res.x[4], res.x[5]])
+    # c = np.asarray(cmps[5][1][1], cmps[5][1][0])
+    # afps = []
+    # for p in ps:
+    #     afps.append(np.dot(A, np.asarray(p)) + b + c)
+    #
+    # path = np.asarray(afps)
+    # path = np.int0(path)
+    # contour_image = cv2.drawContours(original_image.copy(), [path], 0, (255, 0, 0), 3)
+    # plt.imshow(contour_image)
+    # plt.xticks([]), plt.yticks([])
+    # plt.show()
 
     return res
-
-
-    #optimize_affine_transform(image_comps)
 
 if __name__ == '__main__':
     main()
