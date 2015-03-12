@@ -98,26 +98,28 @@ def main():
     res = minimize(cost_function, aff0, method='powell', options={'xtol':1e-8, 'disp': True})
     print(res.x)
 
-    return res
-
     # m = make_affine_matrix(res.x)
-    # width = img.shape[1]
-    # height = img.shape[0]
-    # rw = 0.6
-    # rh = 0.4
-    # p0 = [int(floor((width - rw*width)/2.0)), int(floor((height - rh*height)/2.0))]
-    # p1 = [int(floor((width - rw*width)/2.0)), int(floor((height - rh*height)/2.0 + rh*height) - 1)]
-    # p2 = [int(floor((width - rw*width)/2.0 + rw*width) - 1), int(floor((height - rh*height)/2.0 + rh*height) - 1)]
-    # p3 = [int(floor((width - rw*width)/2.0)), int(floor((height - rh*height)/2.0 + rh*height) - 1)]
-    #
-    # A = np.asarray([[res.x[0], res.x[1]], [res.x[2], res.x[3]]])
-    # b = np.asarray([res.x[4], res.x[5]])
-    # affine_p0 = np.dot(A, np.asarray(p0)) + b + np.asarray(cmps[5][1][0], cmps[5][1][1])
-    # affine_p1 = np.dot(A, np.asarray(p1)) + b + np.asarray(cmps[5][1][0], cmps[5][1][1])
-    # path = [affine_p0, [affine_p0[0], affine_p1[1]], [affine_p0[1], affine_p1[0]], affine_p1]
-    # cv2.drawContours(original_image, [path], 0, (255, 0, 0), 3)
-    # cv2.
+    height, width = img.shape[:2]
+    rh, rw = 0.4, 0.6
+    ps = [[int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0))],
+          [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0))],
+          [int(floor((height - rh*height)/2.0 + rh*height) - 1), int(floor((width - rw*width)/2.0 + rw*width) - 1)],
+          [int(floor((height - rh*height)/2.0)), int(floor((width - rw*width)/2.0 + rw*width) - 1)]]
+    A = np.asarray([[res.x[0], res.x[1]], [res.x[2], res.x[3]]])
+    b = np.asarray([res.x[4], res.x[5]])
+    c = np.asarray(cmps[5][1][1], cmps[5][1][0])
+    afps = []
+    for p in ps:
+        afps.append(np.dot(A, np.asarray(p)) + b + c)
 
+    path = np.asarray(afps)
+    path = np.int0(path)
+    contour_image = cv2.drawContours(original_image.copy(), [path], 0, (255, 0, 0), 3)
+    plt.imshow(contour_image)
+    plt.xticks([]), plt.yticks([])
+    plt.show()
+
+    return res
 
 
     #optimize_affine_transform(image_comps)
